@@ -1,0 +1,123 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+    defaultConfig {
+        applicationId "xyz.xingm.gradletest"
+        minSdkVersion 19
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+//    -------------应用签名(由于buildTypes中有使用参数，所以该配置需要在buildTypes之前)-------------
+    // 签名信息配置
+    signingConfigs{ // 配置对应 signing.properties 文件
+        // 引入签名文件
+        def Properties props = new Properties()
+        props.load(new FileInputStream(file('../signing.properties')))
+        // 发布版本的签名配置
+        release{
+            storeFile file(props['RELEASE_KEYSTORE'])
+            keyAlias props['RELEASE_ALIAS']
+            storePassword props['RELEASE_KEYSTORE_PWD']
+            keyPassword props['RELEASE_KEY_PWD']
+        }
+        // 调试版本的签名配置
+        debug{
+            storeFile file(props['DEBUG_KEYSTORE'])
+            keyAlias props['DEBUG_ALIAS']
+            storePassword props['DEBUG_KEYSTORE_PWD']
+            keyPassword props['DEBUG_KEY_PWD']
+        }
+    }
+//    -------------------------------------------应用签名-------------------------------------------
+
+    buildTypes {
+        // 发布版本
+        release {
+            debuggable false //是否可调式(true: 可接受调试，对程序的安全性有影响，能轻松破解，对程序的大小有影响，会使程序增大。)
+            minifyEnabled true //启用Proguard
+            shrinkResources true //是否清理无用资源,依赖于minifyEnabled 为true 时生效
+            zipAlignEnabled true //是否启用zipAlign压缩
+            signingConfig signingConfigs.release //签名配置
+            minifyEnabled true //是否开启混淆，(true:开启，false:不开启(则可忽略下行配置))
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        // 调试版本
+        debug {
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+            zipAlignEnabled false
+            signingConfig signingConfigs.debug
+        }
+    }
+
+//    --------------------------------------同一软件的不同版本--------------------------------------
+    productFlavors{ // 不同分支的包（通过右侧Build Variants 切换）
+        // 收费版
+        charge{ // 需要在src/目录下新建charge/目录
+            applicationId "xyz.xingm.gradletest.charge" // 不同产品，不同代码；不同产品，不同资源；不同AndroidManifest也可以
+            versionName "1.0" // 版本号
+//            manifestPlaceholders = [UMC:"charge"] // 发布渠道号(Androidmanifest中)
+            minSdkVersion 14
+            buildConfigField("boolean", "AUTO_UPDATA", "true") //　常量值可调用
+            buildConfigField "boolean", "AUTO_UPDATES", "false"
+        }
+        // 免费版
+        free{
+            applicationId "xyz.xingm.gradletest.free"
+            versionName "1.0"
+//            manifestPlaceholders = [UMC:"free"]
+            minSdkVersion 14
+            buildConfigField("boolean", "AUTO_UPDATA", "false") //BuildConfig.AUTO_UPDATA 调用
+        }
+        // 豌豆夹
+        wandou{
+            applicationId "xyz.xingm.gradletest"
+            versionName "1.0"
+            manifestPlaceholders = [UMC:"wandou"]
+            minSdkVersion 14
+            buildConfigField("boolean", "AUTO_UPDATA", "false") //BuildConfig.AUTO_UPDATA 调用
+        }
+    }
+
+    productFlavors.all {
+        flavor -> flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+    }
+
+//    ----------------------------------------打包apk重命名-----------------------------------------
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def outputFile = output.outputFile
+            if (variant.buildType.name.equals('release')) {
+                // 测试应用_v1.0_2017-10-29_charge_release.apk
+                def fileName = "测试应用_v${defaultConfig.versionName}_${releaseTime()}_${variant.productFlavors[0].name}_release.apk"
+                output.outputFile = new File(outputFile.parent, fileName)
+            }else if(variant.buildType.name.equals('debug')){
+                def fileName = "测试应用_v${defaultConfig.versionName}_${releaseTime()}_${variant.productFlavors[0].name}_debug.apk"
+                output.outputFile = new File(outputFile.parent, fileName)
+            }
+        }
+    }
+}
+// 打包apk重命名 日期函数
+def releaseTime() {
+    return new Date().format("yyyy-MM-dd", TimeZone.getTimeZone("UTC"))
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:26.+'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    testCompile 'junit:junit:4.12'
+
+    // 对应上面的 productFlavors 中的 charge，该版本导入以下依赖
+    chargeCompile 'io.reactivex.rxjava2:rxjava:2.0.1' // 不同产品，不同库
+}
