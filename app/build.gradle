@@ -76,7 +76,7 @@ android {
             buildConfigField("boolean", "AUTO_UPDATA", "false") //BuildConfig.AUTO_UPDATA 调用
         }
         // 豌豆夹
-        wandou{
+        wandou{ //　该名称需要对应渠道号
             applicationId "xyz.xingm.gradletest"
             versionName "1.0"
             manifestPlaceholders = [UMC:"wandou"]
