@@ -1,19 +1,25 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.application' //应用程序模块
+//apply plugin: 'com.android.library' //库模块
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.1"
-    defaultConfig {
-        applicationId "xyz.xingm.gradletest"
-        minSdkVersion 19
-        targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    compileSdkVersion 26 //指定项目的编译版本(这里指使用android 8.0系统的SDK编译)
+    buildToolsVersion "26.0.1" //指定项目构建工具的版本
+    defaultConfig { //默认配置
+        applicationId "xyz.xingm.gradletest" //指定项目包名(公司域名+项目名，包名在此修改)
+        minSdkVersion 19 //指定项目最低兼容的Android系统版本
+        targetSdkVersion 26 //表示已经在该版本上做过充分测试，同时系统会为应用启用一些最新的功能和特性
+        versionCode 1 //指定项目版本号
+        versionName "1.0" //指定项目的版本名
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner" //android 测试
+    }
+
+    // 测试
+    packagingOptions {
+        exclude 'LICENSE.txt'
     }
 
 //    -------------应用签名(由于buildTypes中有使用参数，所以该配置需要在buildTypes之前)-------------
-    // 签名信息配置
+    // 签名信息配置(需要在buildTypes配置之前)
     signingConfigs{ // 配置对应 signing.properties 文件
         // 引入签名文件
         def Properties props = new Properties()
@@ -116,8 +122,14 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    testCompile 'junit:junit:4.12'
+    testCompile 'junit:junit:4.12' //Java编写执行Java测试用例。
 
     // 对应上面的 productFlavors 中的 charge，该版本导入以下依赖
     chargeCompile 'io.reactivex.rxjava2:rxjava:2.0.1' // 不同产品，不同库
+    //　测试
+    androidTestCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support:support-annotations:26.+'
+    androidTestCompile 'com.android.support.test:runner:0.2'
+    androidTestCompile 'com.android.support.test:rules:0.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.1'
 }
